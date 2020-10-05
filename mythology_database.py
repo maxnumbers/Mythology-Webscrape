@@ -1,6 +1,7 @@
 from glob import glob
 import json
 import requests
+import pandas as pd
 from tools.webscrapetools import get_soup, split_noblanks
 from bs4 import BeautifulSoup
 
@@ -15,14 +16,12 @@ regions = region_soup.find_all("div", class_="pullout-panel")
 for x, region in enumerate(regions[1:2]):
     region_name = region.find("h2").text
     pantheons = region.find_all("li")
-    myth[f"{region_name}"] = {}
 
-    for y, pantheon in enumerate(pantheons):
+    for y, pantheon in enumerate(pantheons[0:1]):
         pantheon_href = pantheon.find("a")["href"]
         pantheon_name = split_noblanks(pantheon_href, "/")[-1]
         pantheon_soup = get_soup(pantheon_href)
         print(f"Groups:{x+1}/{len(regions)-2}, Pantheons:{y+1}/{len(pantheons)}")
-        myth[f"{region_name}"][f"{pantheon_name}"] = {}
 
         ### [Page2]Pantheon's Page:
         try:
@@ -65,7 +64,7 @@ for x, region in enumerate(regions[1:2]):
                 god_href = god.find("a")["href"]
                 god_name = split_noblanks(god_href, "/")[-1]
                 god_soup = get_soup(god_href)
-                myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"] = {}
+                myth[f"{god_name}"] = {}
 
                 ### Page 3: God Page
                 god_page = god_soup.find("div", "text-bubble", "p")
@@ -99,24 +98,15 @@ for x, region in enumerate(regions[1:2]):
                         field_name = info.split(":")[0].replace(" ", "")
                         field_str = info.split(":")[1].replace(" ", "")
 
-                    # assigned parsed info to dict
-                    myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"][
-                        f"{field_name}"
-                    ] = field_str
-                    myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"][
-                        "Link"
-                    ] = god_href
-                    myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"][
-                        "Summary"
-                    ] = god_summary.find("div",)
-                    myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"][
-                        "Related_Gods"
-                    ] = related_god_list
-                    myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"][
-                        "Related_Gods_Links"
-                    ] = related_god_link_list
+                # assigned parsed info to dict
+                myth[f"{god_name}"][f"{field_name}"] = field_str
+                myth[f"{god_name}"]["Link"] = god_href
+                myth[f"{god_name}"]["Summary"] = god_summary_text
+                myth[f"{god_name}"]["Related_Gods"] = related_god_list
+                myth[f"{god_name}"]["Related_Gods_Links"] = related_god_link_list
+                myth[f"{god_name}"]["Region_Name"] = region
+                myth[f"{god_name}"]["Pantheon_Name"] = pantheon
 
+                # TODO print of God list % complete
 
-with open("godchecker/mythology_dict.txt", "w") as file:
-    file.write(json.dumps(myth).encode("utf-8"))
-    file.close
+# df = pd.DataFrame.from_dict(myth)
