@@ -13,10 +13,11 @@ region_soup = soup.find("div", id="pantheon-list")
 regions = region_soup.find_all("div", class_="pullout-panel")
 
 for x, region in enumerate(regions[1:-1]):
+    region_name = region.find("h2").text
     pantheons = region.find_all("h2", "li")
     myth[f"{region_name}"] = {}
 
-    for y, pantheon in enumerate(pantheons.found_all):
+    for y, pantheon in enumerate(pantheons):
         pantheon_href = pantheon.find("a")["href"]
         pantheon_name = split_noblanks(pantheon_href.text, "/")[-1]
         pantheon_soup = get_soup(pantheon_href)
@@ -42,10 +43,10 @@ for x, region in enumerate(regions[1:-1]):
                 related_gods = god_page.text
                 related_gods_links = god_page.find_all("a")
                 god_table = god_soup.find(
-                    "div", class_="pullout-panel vitalsbox finnish" > "p"
-                )
+                    "div", class_="pullout-panel vitalsbox finnish"
+                ).find_all("p")
 
-                for section in god_table.find_all:
+                for section in god_table:
 
                     info_fields = split_noblanks(section)
                     for info in info_fields:
