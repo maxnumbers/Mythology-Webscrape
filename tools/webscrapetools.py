@@ -9,7 +9,7 @@ def get_soup(url):
     return soup
 
 
-def split_noblanks(text=str, split_by=str):
+def split_noblanks(text, split_by):
     split_arr = text.split(split_by)
     while "" in split_arr:
         split_arr.remove("")
