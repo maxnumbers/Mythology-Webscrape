@@ -1,7 +1,7 @@
-import glob
+from glob import glob
 import json
 import requests
-from webscrapetools import soupstrainer, get_soup, split_noblanks
+from tools.webscrapetools import get_soup, split_noblanks
 from bs4 import BeautifulSoup
 
 url = "https://godchecker.com"
@@ -9,47 +9,40 @@ soup = get_soup(url)
 myth = {}
 
 ### Page 1: Homepage
-regions = soupstrainer(
-    soup, str("div", id="pantheon-list"), str("div", class_="pullout-panel")
-)
-regions_len = len(regions)
+region_soup = soup.find("div", id="pantheon-list")
+regions = region_soup.find_all("div", class_="pullout-panel")
 
-for x, region in enumerate(regions.found_all[1:-1]):
-    pantheons = soupstrainer(region, "h2", "li")
-    region_name = pantheons.found.text
+for x, region in enumerate(regions[1:-1]):
+    pantheons = region.find_all("h2", "li")
     myth[f"{region_name}"] = {}
 
     for y, pantheon in enumerate(pantheons.found_all):
         pantheon_href = pantheon.find("a")["href"]
         pantheon_name = split_noblanks(pantheon_href.text, "/")[-1]
         pantheon_soup = get_soup(pantheon_href)
-        print(f"Groups:{x+1}/{regions.len-2}, Pantheons:{y+1}/{pantheons.len}")
+        print(f"Groups:{x+1}/{len(regions)-2}, Pantheons:{y+1}/{pantheons.len}")
         myth[f"{region_name}"][f"{pantheon_name}"] = {}
 
         ### [Page2]Pantheon's Page:
         try:
-            gods = soupstrainer(
-                pantheon_soup,
-                str("div", class_="pullout-panel topgodsbox floatable"),
-                "a",
-            )
+            gods = pantheon_soup.find(
+                "div", class_="pullout-panel topgodsbox floatable"
+            ).find_all("a")
         except:
-            gods = soupstrainer(pantheon_soup, str("div", class_="text-bubble"), "a")
+            gods = pantheon_soup.find("div", class_="text-bubble").find_all("a")
         finally:
-            for god in gods.found_all:
+            for god in gods:
                 god_href = god.find("a")["href"]
                 god_name = split_noblanks(god_href.text, "/")[-1]
                 god_soup = get_soup(god_href)
                 myth[f"{region_name}"][f"{pantheon_name}"][f"{god_name}"] = {}
 
                 ### Page 3: God Page
-                god_page = soupstrainer(
-                    god_soup, str("div", class_="text-bubble" > "p"), "a"
-                )
-                related_gods = god_page.found.text
-                related_gods_links = god_page.found_all
-                god_table = soupstrainer(
-                    god_soup, str("div", class_="pullout-panel vitalsbox finnish" > "p")
+                god_page = god_soup.find("div", "text-bubble", "p")
+                related_gods = god_page.text
+                related_gods_links = god_page.find_all("a")
+                god_table = god_soup.find(
+                    "div", class_="pullout-panel vitalsbox finnish" > "p"
                 )
 
                 for section in god_table.find_all:
@@ -74,10 +67,9 @@ for regs in myth.keys():
             myth[f"{regs}"][f"{pans}"][f"{gs}"]["Region_Name"] = regs
             myth[f"{regs}"][f"{pans}"][f"{gs}"]["Pantheon_Name"] = pans
 
-            # necessary because there's no way to get text from "find_all" w/o iterating
             rltn_list = []
             rltn_link_list = []
-            for rltn in god_relations:
+            for rltn in related_gods:
                 rltn_list.append(rltn.text)
                 if rltn.find("span")["href"]:
                     rltn_link_list.append(rltn.find("span")["href"])
@@ -87,6 +79,6 @@ for regs in myth.keys():
 
             flat_json.append(myth[f"{regs}"][f"{pans}"][f"{gs}"])
 
-with open("mythology_flattened.json", "w") as f:
+with open("godchecker/mythology_flattened.json", "w") as f:
     json.dump(flat_json, f)
 
