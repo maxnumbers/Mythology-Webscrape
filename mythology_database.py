@@ -7,17 +7,18 @@ from bs4 import BeautifulSoup
 
 url = "https://godchecker.com"
 soup = get_soup(url)
-myth = {}
+myth = []
 
 ### Page 1: Homepage
 region_soup = soup.find("div", id="pantheon-list")
 regions = region_soup.find_all("div", class_="pullout-panel")
 
-for x, region in enumerate(regions[1:2]):
+# iterate through [1:-1] due to unneeded boxes
+for x, region in enumerate(regions[1:-1]):
     region_name = region.find("h2").text
     pantheons = region.find_all("li")
 
-    for y, pantheon in enumerate(pantheons[0:1]):
+    for y, pantheon in enumerate(pantheons):
         pantheon_href = pantheon.find("a")["href"]
         pantheon_name = split_noblanks(pantheon_href, "/")[-1]
         pantheon_soup = get_soup(pantheon_href)
@@ -64,7 +65,7 @@ for x, region in enumerate(regions[1:2]):
                 god_href = god.find("a")["href"]
                 god_name = split_noblanks(god_href, "/")[-1]
                 god_soup = get_soup(god_href)
-                myth[f"{god_name}"] = {}
+                god = {}
 
                 ### Page 3: God Page
                 god_page = god_soup.find("div", "text-bubble", "p")
@@ -82,8 +83,8 @@ for x, region in enumerate(regions[1:2]):
                     god_summary_text = paragraph.text
 
                 # parse god relationships
+                related_god_list = []
                 for related_god in related_gods:
-                    related_god_list = []
                     if related_god.text not in related_god_list:
                         related_god_list.append(related_god.text)
 
@@ -97,16 +98,22 @@ for x, region in enumerate(regions[1:2]):
                     for info in info_fields:
                         field_name = info.split(":")[0].replace(" ", "")
                         field_str = info.split(":")[1].replace(" ", "")
+                        god[f"{field_name}"] = field_str
 
                 # assigned parsed info to dict
-                myth[f"{god_name}"][f"{field_name}"] = field_str
-                myth[f"{god_name}"]["Link"] = god_href
-                myth[f"{god_name}"]["Summary"] = god_summary_text
-                myth[f"{god_name}"]["Related_Gods"] = related_god_list
-                myth[f"{god_name}"]["Related_Gods_Links"] = related_god_link_list
-                myth[f"{god_name}"]["Region_Name"] = region
-                myth[f"{god_name}"]["Pantheon_Name"] = pantheon
+                god["Link"] = god_href
+                god["Summary"] = god_summary_text
+                god["Related_Gods"] = related_god_list
+                god["Related_Gods_Links"] = related_god_link_list
+                god["Region_Name"] = region_name
+                god["Pantheon_Name"] = pantheon_name
+                myth.append(god)
 
                 # TODO print of God list % complete
+df = pd.DataFrame.from_dict(myth)
+# df_json = pd.DataFrame.to_json(df)
+df.to_excel("godchecker/mythology.xlsx", sheet_name="gods")
+print("Process Complete! :D")
 
-# df = pd.DataFrame.from_dict(myth)
+# with open("godchecker/mythology_json.txt", "w") as outfile:
+#     json.dump(myth, outfile)
