@@ -77,10 +77,9 @@ for x, region in enumerate(regions[1:-1]):
                 # parse god summary paragraphs
                 god_summary_text = ""
                 if len(god_summary) > 2:
-                    for paragraph in god_summary:
-                        god_summary_text = god_summary_text + paragraph.text
-                else:
-                    god_summary_text = paragraph.text
+                    god_summary = god_summary[:2]
+                for paragraph in god_summary:
+                    god_summary_text = god_summary_text + paragraph.text
 
                 # parse god relationships
                 related_god_list = []
@@ -105,11 +104,17 @@ for x, region in enumerate(regions[1:-1]):
                 god["Summary"] = god_summary_text
                 god["Related_Gods"] = related_god_list
                 god["Related_Gods_Links"] = related_god_link_list
-                god["Region_Name"] = region_name
+                god["Region_Name"] = region_name.replace("The Gods of", "")
                 god["Pantheon_Name"] = pantheon_name
                 myth.append(god)
+                # god[""] =
+                # god[""] =
+                # god[""] =
+                # god[""] =
+                # god[""] =
+                # god[""] =
 
-                # TODO print of God list % complete
+
 df = pd.DataFrame.from_dict(myth)
 # df_json = pd.DataFrame.to_json(df)
 df.to_excel("godchecker/mythology.xlsx", sheet_name="gods")
